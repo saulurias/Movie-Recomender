@@ -1,6 +1,5 @@
 package nearsoft.academy.bigdata.recommendation;
 
-import org.apache.commons.lang.time.StopWatch;
 import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.model.file.FileDataModel;
 import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
@@ -44,25 +43,29 @@ public class MovieRecommender {
 
             String content;
 
+            int idUsersCount = 0;
+            int idProductsCount = 0;
+
             while ((content = buffered.readLine()) != null){
                 if (content.contains(userKey)) {
                     String userId = content.split(userKey)[1];
                     usersArray.add(userId);
+                    if(!this.mapUsers.containsKey(userId)){
+                        this.mapUsers.put(userId,idUsersCount);
+                        idUsersCount ++;
+                    }
                 }else if (content.contains(productKey)){
                     String product = content.split(productKey)[1];
                     productsArray.add(product);
+                    if(!this.mapProducts.containsKey(product)){
+                        this.mapProducts.put(product,idProductsCount);
+                        idProductsCount ++;
+                    }
                 }else if(content.contains(scoreKey)){
                     String score = content.split(scoreKey)[1];
                     scoresArray.add(Double.valueOf(score));
                 }
             }
-
-            mapUsers = this.getMap(usersArray);
-            mapProducts = this.getMap(productsArray);
-
-            System.out.println("Total Users: " + String.valueOf(mapUsers.size()));
-            System.out.println("Total Products: " + String.valueOf(mapProducts.size()));
-            System.out.println("Total Reviews: " + String.valueOf(scoresArray.size()));
 
             this.writeCsvFile();
 
@@ -74,8 +77,6 @@ public class MovieRecommender {
             e1.printStackTrace();
         }
     }
-
-
 
     public void writeCsvFile(){
         FileWriter writer = null;
@@ -97,8 +98,6 @@ public class MovieRecommender {
                 writer.append('\n');
             }
 
-            System.out.println("CSV file created...");
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -109,18 +108,6 @@ public class MovieRecommender {
                 e.printStackTrace();
             }
         }
-    }
-
-    public Map<String,Integer> getMap(ArrayList<String> list){
-        Map<String,Integer> map = new HashMap<String,Integer>();
-        int id = 1;
-        for(String s:list){
-            if(!map.containsKey(s)){
-                map.put(s,id);
-                id++;
-            }
-        }
-        return map;
     }
 
     public int getTotalReviews(){
@@ -156,8 +143,8 @@ public class MovieRecommender {
         }
 
         for (RecommendedItem recommendation : recommendations) {
-            String r = getKeyFromProductMap((int) recommendation.getItemID());
-            foundRecommendations.add(r);
+            String value = getKeyFromProductMap((int) recommendation.getItemID());
+            foundRecommendations.add(value);
         }
 
         return foundRecommendations;
@@ -165,11 +152,9 @@ public class MovieRecommender {
 
     public String getKeyFromProductMap(int value){
         for(String key: mapProducts.keySet()){
-            if(mapProducts.get(key)==value)
+            if(mapProducts.get(key) == value)
                 return key;
         }
         return null;
     }
-
-
 }
